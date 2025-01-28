@@ -17,3 +17,13 @@ def load_data(file):
 
 # Upload de dados
 uploaded_file = st.file_uploader("Carregar arquivo CSV com dados da Premier League", type=["csv"])
+
+if uploaded_file:
+    data = load_data(uploaded_file)
+    st.write('### Dados Carregados')
+    st.dataframe(data)
+    
+    # Gráfico de barras: Pontuação atual
+    st.subheader("Pontuação Atual dos Times")
+    fig_bar = px.bar(data, x="Time", y="Pontos", color="Time", title="Pontuação Atual")
+    st.plotly_chart(fig_bar)
