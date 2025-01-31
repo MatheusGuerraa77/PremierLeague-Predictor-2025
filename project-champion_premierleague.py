@@ -1,29 +1,77 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
+import plotly.express as px
+import random
 
-# Título e descrição do app
+# ---- CONFIGURAÇÕES ----
+st.set_page_config(page_title="Premier League Predictor 2025", layout="wide")
 
-st.title("PremierLeague-Predictor 2025")
-st.markdown("""
-Um aplicativo interativo para visualizar dados da Premier League e estimar as probabilidades de título dos 12 primeiros times.
-""")
+# ---- CARREGANDO OS DADOS ----
+@st.cache_data
+def load_data():
+    df = pd.read_csv("PremierDB.csv", delimiter=";")
+    return df
 
-# Função para carregar os dados
-def load_data(file):
-    return pd.read_csv(file)
+df = load_data()
 
-# Upload de dados
-uploaded_file = st.file_uploader("Carregar arquivo CSV com dados da Premier League", type=["csv"])
+# ---- CABEÇALHO ----
+st.title("🏆 Premier League Predictor 2025")
+st.markdown("Acompanhe a **classificação**, **confrontos diretos**, **histórico de jogos** e **simulações de título**.")
 
-if uploaded_file:
-    data = load_data(uploaded_file)
-    st.write('### Dados Carregados')
-    st.dataframe(data)
+# ---- VISUALIZAÇÃO DA TABELA ----
+st.subheader("📊 Classificação Atual")
+st.dataframe(df.style.format({"Pts/PPJ": "{:.2f}", "xGD/90": "{:.2f}"}))
+
+# ---- GRÁFICO DE PONTUAÇÃO ----
+st.subheader("🔢 Pontuação dos Times")
+fig = px.bar(df.sort_values(by="Pt", ascending=True), x="Pt", y="Equipe", orientation="h", text="Pt",
+             color="Pt", color_continuous_scale="blues")
+st.plotly_chart(fig, use_container_width=True)
+
+# ---- CONFRONTOS RESTANTES ----
+st.subheader("⚽ Confrontos Diretos Restantes")
+
+# Simulação básica de confrontos
+teams = df["Equipe"].tolist()
+random.shuffle(teams)
+confrontos_restantes = [(teams[i], teams[i+1]) for i in range(0, len(teams)-1, 2)]
+confrontos_df = pd.DataFrame(confrontos_restantes, columns=["Time A", "Time B"])
+st.table(confrontos_df)
+
+# ---- HISTÓRICO DE DESEMPENHO ----
+st.subheader("📈 Histórico dos Últimos 5 Jogos")
+
+historico = df[["Equipe", "Últimos 5"]].copy()
+historico["Vitórias"] = historico["Últimos 5"].apply(lambda x: x.count("V"))
+historico["Empates"] = historico["Últimos 5"].apply(lambda x: x.count("E"))
+historico["Derrotas"] = historico["Últimos 5"].apply(lambda x: x.count("D"))
+
+fig_hist = px.bar(historico, x="Equipe", y=["Vitórias", "Empates", "Derrotas"], barmode="group",
+                  title="Resultados dos Últimos 5 Jogos", labels={"value": "Jogos", "variable": "Resultado"})
+st.plotly_chart(fig_hist, use_container_width=True)
+
+# ---- SIMULAÇÃO DE TÍTULO ----
+st.subheader("📊 Simulação de Probabilidades de Título")
+
+# Modelo simples de simulação usando Poisson
+def simulate_champion(df, num_simulations=10000):
+    champions = []
+    for _ in range(num_simulations):
+        df["Simulated Points"] = df["Pt"] + np.random.poisson(lam=df["xGD/90"] * 5)
+        champion = df.loc[df["Simulated Points"].idxmax(), "Equipe"]
+        champions.append(champion)
     
-    # Gráfico de barras: Pontuação atual
-    st.subheader("Pontuação Atual dos Times")
-    fig_bar = px.bar(data, x="Time", y="Pontos", color="Time", title="Pontuação Atual")
-    st.plotly_chart(fig_bar)
+    return pd.Series(champions).value_counts(normalize=True) * 100
+
+probabilidades = simulate_champion(df)
+st.bar_chart(probabilidades)
+
+# ---- EXIBIÇÃO DE CONCLUSÕES ----
+st.markdown("### 🔎 Conclusões")
+st.markdown("- **Favoritos ao título**: Liverpool e Arsenal.")
+st.markdown("- **Os confrontos diretos podem mudar a classificação.**")
+st.markdown("- **Últimos jogos são decisivos na projeção do título.**")
+
+# ---- FINALIZAÇÃO ----
+st.markdown("⚽ Criado por [Seu Nome]. Dados fictícios com base na temporada 2025.")
