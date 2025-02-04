@@ -7,7 +7,7 @@ import random
 # ---- CONFIGURAÇÕES ----
 st.set_page_config(page_title="Premier League Predictor 2025", layout="wide")
 
-# ---- CARREGANDO OS DADOS ----
+# ----  CARREGANDO OS DADOS  ----
 @st.cache_data
 def load_data():
     df = pd.read_csv("PremierDB.csv", delimiter=";")
