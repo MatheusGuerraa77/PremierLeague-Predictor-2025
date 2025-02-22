@@ -21,7 +21,7 @@ selected_team = st.sidebar.selectbox("📊 Estatísticas Detalhadas do Time:", d
 
 # ---- CABEÇALHO ----
 st.title("🏆 Premier League Predictor 2025")
-st.markdown("Acompanhe a **classificação**, **confrontos diretos** e **histórico de jogos**.")
+st.markdown("Acompanhe a **classificação**, **confrontos diretos** e **histórico de jogos**.(Dados do dia 17/01/2025)")
 
 # ---- VISUALIZAÇÃO DA TABELA ----
 st.subheader("📊 Classificação Atual")
